@@ -1,5 +1,9 @@
 <?php
 
+/**
+* Handles user stuff, ie: login, register, logout, islogged in, session starts, hashing algo, ect. 
+*/
+
 class Users
 {
     private $dbh;
@@ -46,7 +50,7 @@ class Users
      */
     public function doRegister()
     {
-        $sess_token = $_SESSION['registerToken'];
+        $sess_token = Session::get('registerToken');
         $form_token = $_POST['registerToken'];
         $username = htmlentities($_POST['username']);
         $password = htmlentities($_POST['password']);
@@ -152,13 +156,17 @@ class Users
         {
             return false;
         }
+        elseif (empty($_SERVER['REMOTE_ADDR']))
+        {
+            return false; /* NOTE: create a getIP() function, forget the default way. */
+        }
 
         //define user const
         $userData = $this->checkUsername($username);
         $userid = $userData['id'];
         $user_pass = $userData['password'];
         $agent = $_SERVER['HTTP_USER_AGENT'];
-        if (!self::checkPassword($user_pass, $form_pass))
+        if (self::checkPassword($user_pass, $password))
         {
             
             //update the users timestamp, well use it to generate an online status.
@@ -170,11 +178,15 @@ class Users
             Session::init();
             Session::set('logged_in', true);
             Session::set('userid', $userid);
-            Session::set('agent', $agent);
+            Session::set('userAgent', $agent);
             Session::set('count', 5);
             unset($_SESSION['loginToken']); //remove the login session token.
             
             return true; //login successful, return true (bool) login successful.
+        }
+        else
+        {
+            return false; //hashed passwords did not match.
         }
     }
     
@@ -222,6 +234,9 @@ class Users
         self::checkSessExpire(); //run check expired function.
     }
     
+    /**
+     * Regenerates the session id (true)
+     */
     public static function checkSessExpire()
     {
         //only when the count is 3 and flagged is set!
