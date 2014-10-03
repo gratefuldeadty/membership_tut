@@ -12,17 +12,22 @@ include 'classes/users.php';
 
 $users = new Users($dbh);
 
-//is the user logged in?
-if ($users->isLoggedIn() == true)
+//isLoggedIn function at work:
+if ($userLoad->isLoggedIn() == true)
 {
-	$userData = $users->userData(Session::get('userid'));
-	echo 'Logged In as '.$userData['username'];
+	//-- display the logged in user results:
+	$userData = $userLoad->userData(Session::get('userid'));
+	echo 'Logged in as '.$userData['username'];
 	exit;
+	
+	//-- redirect the user (this general comes before we display user logged in results.)
+	header('Location: members.php'); //log in redirect.
 }
 
 
 if (isset($_POST['doLogin']))
 {
+	//doLogin function at work:
 	if ($users->doLogin() == true)
 	{
 		echo 'Login successful!';
