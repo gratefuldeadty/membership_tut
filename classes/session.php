@@ -50,15 +50,11 @@ class Session
     /**
      * Get the specific session - if existing.
      * @param mixed $key
-     * @return mixed
+     * @return mixed : ''
      */
     public static function get($key)
     {
         return (isset($_SESSION[$key])) ? $_SESSION[$key] : '';
-        /*if (isset($_SESSION[$key])) 
-        {
-            return $_SESSION[$key];
-        }*/
     }
     
     /**
