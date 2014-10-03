@@ -2,6 +2,7 @@
 
 /**
 * Handles user stuff, ie: login, register, logout, islogged in, session starts, hashing algo, ect. 
+* @currently: everything is running properly.
 */
 
 class Users
@@ -9,11 +10,12 @@ class Users
     private $dbh;
     private static $algo = '$2a';
     private static $cost = '$10';
-
+    public $ipConfig = true; //default, the IP from hidden form fields needs to match the users current IP.
+                             //to avoid the IP check, set $ipConfig to false. Ip still cannot be left empty.
     /**
      * Constructor  
      */
-    public function __construct(Database $database)
+    public function __construct($database)
     {
         $this->dbh = $database;
     }
@@ -91,6 +93,10 @@ class Users
         {
             return false;
         }
+        elseif ($this->ipConfig == true AND $_SERVER['REMOTE_ADDR'] != $ip)     
+        {                                   // the register page has a hidden field for IP.                                       // if it changes, false is returned.
+            return false;                   // for AOL users, this will be a problem.
+        }                                   // to avoid this, set $ipConfig to false.
         elseif (isset($username) 
             AND isset($password) 
             AND isset($vpassword) 
@@ -112,8 +118,7 @@ class Users
                 (`username`,`email`,`password`,`ip`,`sec_question`,`sec_answer`) VALUES (?,?,?,?,?,?)');
             $query->execute(array($username, $email, $password, $ip, $sec_question, $sec_answer));
     
-            //remove the register session token.
-            unset($_SESSION['registerToken']);
+            Session::sunset('registerToken'); //unset (remove) the register token.
             
             //return bool, registration successful!.
             return true;
@@ -128,6 +133,7 @@ class Users
     {
         $username = htmlentities($_POST['username']);
         $password = htmlentities($_POST['password']);
+        $ip = htmlentities($_POST['ip']);
         $form_token = $_POST['loginToken'];
         $sess_token = $_SESSION['loginToken'];
 
@@ -144,7 +150,7 @@ class Users
         {
             return false;
         }
-        elseif (!isset($username) OR !isset($password))
+        elseif (!isset($username) OR !isset($password) OR !isset($ip))
         {
             return false;
         }
@@ -156,9 +162,9 @@ class Users
         {
             return false;
         }
-        elseif (empty($_SERVER['REMOTE_ADDR']))
+        elseif ($this->ipConfig == true AND $ip != $_SERVER['REMOTE_ADDR'])
         {
-            return false; /* NOTE: create a getIP() function, forget the default way. */
+            return false; //again, if ipConfig == true, it will need to validate that ip's match.
         }
 
         //define user const
@@ -180,7 +186,7 @@ class Users
             Session::set('userid', $userid);
             Session::set('userAgent', $agent);
             Session::set('count', 5);
-            unset($_SESSION['loginToken']); //remove the login session token.
+            Session::sunset('loginToken'); //unset (remove) the login token.
             
             return true; //login successful, return true (bool) login successful.
         }
