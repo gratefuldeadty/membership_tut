@@ -1,0 +1,55 @@
+/**
+* Stylesheet
+*/
+
+body {
+    font-family: verdana;
+    font-size: 10pt;
+    color: #000000;
+}
+
+A:link { text-decoration:none; font-family:verdana; font-size:12px; color:#B6421A; cursor:pointer; }
+A:visited { text-decoration:none; font-family:verdana; font-size:12px; color:#B6421A; cursor:pointer; }
+A:active { text-decoration:none; font-family:verdana; font-size:12px; color:#B6421A; cursor:pointer; }
+A:hover { text-decoration:none; font-family:verdana; font-size:12px; color:#d69820; cursor:pointer; }
+
+label {
+    font-size: 10pt;
+}
+
+input {
+    background-color: #CCCCCC;
+    border: 1px solid #000000;
+}
+
+select {
+    background-color: #CCCCCC;
+    border: 1px solid #000000;
+}
+
+.home_nav_bar {
+    width: 99%;
+    border: 1px solid #000000;
+}
+
+.out_wrapper {
+	padding: 4px;
+}
+
+.left_page {
+    float: left;
+    display: inline;
+    position: relative;
+    width: 49%;
+    margin-left: 1px;
+    border: 1px solid #000000;
+}
+
+.right_page {
+    float: right;
+    display: inline;
+    position: relative;
+    width: 49%;
+    margin-right: 1px;
+    border: 1px solid #000000;
+}
