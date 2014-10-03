@@ -27,6 +27,16 @@ class Session
         $_SESSION[$key] = $value;
     }
     
+    /**
+     * Set a value to a session array.
+     * @param mixed $key
+     * @param mixed $value
+     */
+    public static function setArr($key, $value)
+    {
+        $_SESSION[$key][] = $value;
+    }
+    
     
     /**
      * unset a session.
@@ -38,16 +48,17 @@ class Session
     }
 
     /**
-     * Get the specific session
+     * Get the specific session - if existing.
      * @param mixed $key
      * @return mixed
      */
     public static function get($key)
     {
-        if (isset($_SESSION[$key])) 
+        return (isset($_SESSION[$key])) ? $_SESSION[$key] : '';
+        /*if (isset($_SESSION[$key])) 
         {
             return $_SESSION[$key];
-        }
+        }*/
     }
     
     /**
