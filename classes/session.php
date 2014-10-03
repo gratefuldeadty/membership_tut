@@ -18,7 +18,7 @@ class Session
     }
 
     /**
-     * sets a specific value to a specific key of the session
+     * Sets a value of a session based off the key.
      * @param mixed $key
      * @param mixed $value
      */
@@ -28,30 +28,30 @@ class Session
     }
     
     
+    /**
+     * unset a session.
+     * @param mixed $key
+     */
     public static function sunset($key)
     {
     	unset($_SESSION[$key]);
     }
 
     /**
-     * gets/returns the value of a specific key of the session
-     * @param mixed $key Usually a string, right ?
+     * Get the specific session
+     * @param mixed $key
      * @return mixed
      */
     public static function get($key)
     {
-        if (isset($_SESSION[$key])) {
+        if (isset($_SESSION[$key])) 
+        {
             return $_SESSION[$key];
         }
     }
     
-    public static function reg($value)
-    {
-    	session_regenerate_id($value);
-    }
-
     /**
-     * deletes the session (= logs the user out)
+     * Delete the current session.
      */
     public static function destroy()
     {
