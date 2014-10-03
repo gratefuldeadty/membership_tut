@@ -4,7 +4,7 @@
  * NOTE: this is procedural style. 
  * $dbh is the database handler. 
  * 
- * make sure you replace 'databasename_here' with whatever database name it is that you are using.
+ * make sure you replace 'databasename_here' with whatever database name it is that you are using..
  */
 
 $db_user = 'db_username';
