@@ -10,8 +10,9 @@ class Users
     private $dbh;
     private static $algo = '$2a';
     private static $cost = '$10';
-    public $ipConfig = true; //default, the IP from hidden form fields needs to match the users current IP.
-                             //to avoid the IP check, set $ipConfig to false. Ip still cannot be left empty.
+    public $ipConfig = true;
+    private $emailVerify = false;
+                        
     /**
      * Constructor  
      */
@@ -109,19 +110,49 @@ class Users
             AND strlen($username) > 2 AND strlen($username) < 50
             AND strlen($password) > 3)
         {
-            //everything checked.
 
             $password = self::hashPassword($password); //hashing the password.
 
+            $verified = ($emailVerify == true) ? 'false' : 'true';
+
+            $activation_code = ($emailVerify == true) ? sha1(uniqid(mt_rand(), true)) : '';
+
             //insert the new user
             $query = $this->dbh->prepare('INSERT INTO `stats`
-                (`username`,`email`,`password`,`ip`,`sec_question`,`sec_answer`) VALUES (?,?,?,?,?,?)');
-            $query->execute(array($username, $email, $password, $ip, $sec_question, $sec_answer));
+                    (`username`,`email`,`password`,`ip`,`sec_question`,`sec_answer`,`verified`,`activation_code`) 
+                VALUES 
+                    (?,?,?,?,?,?)');
+            $query->execute(array(
+                    $username, $email, $password, $ip, $sec_question, $sec_answer, $verified, $activation_code));
     
-            Session::sunset('registerToken'); //unset (remove) the register token.
-            
-            //return bool, registration successful!.
-            return true;
+            if ($emailVerify == true)
+            {
+                $userid = $this->dbh->lastInsertId();
+                if ($this->sendVerificationEmail($userid, $email, $activation_code))
+                {
+                    Session::sunset('registerToken');
+                    return true;
+                }
+                else
+                {
+                    //delete the user; the email verification process has failed,
+                    //we need to let the user know to re-sign up.
+                    $query = $this->dbh->prepare('DELETE FROM `stats`
+                        WHERE `id` = ?');
+                    $query->execute(array($userid));
+                    return false;
+                }
+            }
+            else
+            {
+                //
+                Session::sunset('registerToken');
+                return true;
+            }
+        }
+        else
+        {
+            return false;
         }
     }
     
@@ -221,6 +252,29 @@ class Users
         }
         return ($check == 4) ? true : false;
     }
+    
+    
+    
+    /**
+     * Sets the feedback sessions back to null 
+     * to avoid repeating the error/message in the wrong place!
+     */
+    public function displayFeedback()
+    {
+        // errors & messages.
+        Session::set('Error', null);
+        Session::set('Error', null);
+    }
+    
+    /**
+     * Set a session array - created for the error/message feedback.
+     */
+    public static function setArr($key, $value)
+    {
+        $_SESSION[$key][] = $value;
+    }
+    
+    
     
     /**
      * System for regenerating session ids.
