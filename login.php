@@ -12,23 +12,34 @@ include 'classes/users.php';
 
 $users = new Users($dbh);
 
-if (isset($_POST['doLogin']))
+//is the user logged in?
+if ($users->isLoggedIn() == true)
 {
-	if ($users->doLogin() == true)
-	{
-		echo 'Login successful!';
-	}
-	else
-	{
-		echo 'Login failed!!'
-	}
+	$userData = $users->userData(Session::get('userid'));
+	echo 'Logged In as '.$userData['username'];
+	exit;
 }
+else
+{
 
-if (!Session::get('loginToken'))
-{
-	Session::set('loginToken', uniqid()); //if the token is not set, 
-}
-?>
+
+	if (isset($_POST['doLogin']))
+	{
+		if ($users->doLogin() == true)
+		{
+			echo 'Login successful!';
+		}
+		else
+		{
+			echo 'Login failed!!'
+		}
+	}
+	
+	if (!Session::get('loginToken'))
+	{
+		Session::set('loginToken', uniqid()); //if the token is not set, 
+	}
+	?>
 
 <div align="center">
 	<form method="POST">
@@ -56,3 +67,9 @@ if (!Session::get('loginToken'))
 		</table>
 	</form>
 </div>
+
+<?php
+
+} //end the else.
+
+?>
