@@ -253,28 +253,16 @@ class Users
         return ($check == 4) ? true : false;
     }
     
-    
-    
     /**
-     * Sets the feedback sessions back to null 
-     * to avoid repeating the error/message in the wrong place!
+     * Displaying feedback messages, (errors/messages)
+     * and set them to null.
      */
     public function displayFeedback()
     {
-        // errors & messages.
+        // set the error/message blank.
         Session::set('Error', null);
-        Session::set('Error', null);
+        Session::set('Message', null);
     }
-    
-    /**
-     * Set a session array - created for the error/message feedback.
-     */
-    public static function setArr($key, $value)
-    {
-        $_SESSION[$key][] = $value;
-    }
-    
-    
     
     /**
      * System for regenerating session ids.
