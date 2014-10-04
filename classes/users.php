@@ -8,7 +8,7 @@
 class Users
 {
     private $dbh;
-    private static $algo = '$2a';
+    private static $algo = '$2y';
     private static $cost = '$10';
     private $ipVerify = false;
     private $emailVerify = false;
@@ -19,6 +19,9 @@ class Users
     public function __construct($database)
     {
         $this->dbh = $database;
+        
+        //$2y$ is the updated algorithm string.
+        self::algo = (version_compare(PHP_VERSION, '5.3.7') >= 0) ? '$2y' : '$2x';
     }
     
     /**
