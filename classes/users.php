@@ -10,7 +10,7 @@ class Users
     private $dbh;
     private static $algo = '$2a';
     private static $cost = '$10';
-    public $ipConfig = true;
+    private $ipVerify = false;
     private $emailVerify = false;
                         
     /**
@@ -64,40 +64,54 @@ class Users
         $sec_answer = htmlentities($_POST['sec_answer']);
         if (!self::checkToken($form_token, $sess_token))
         {
+            Session::setArr('Error', 'Error: The register token is invalid');
             return false;
         }
         elseif (!preg_match('/^[a-z\d]{2,64}$/i', $username))
         {
+            Session::set('Error', 'Username contains invalid characters. Form manipulation is frowned upon.');
             return false;
         }
-        elseif (!isset($username) OR !isset($password) OR !isset($vpassword) OR !isset($email) OR !isset($ip) OR !isset($sec_question) OR !isset($sec_answer))
+        elseif (!isset($username) OR !isset($password) OR !isset($vpassword) OR !isset($email) OR !isset($sec_question) OR !isset($sec_answer))
         {
+            Session::set('Error', 'You must fill out all fields of the form.');
+            return false;
+        }
+        elseif (!isset($ip))
+        {
+            Session::set('Error', 'Your IP-address must be visible.')
             return false;
         }
         elseif (strlen($username) < 3 OR strlen($username) > 50)
         {
+            Session::set('Error', 'Username must be between 3 and 50 characters in length.');
             return false;
         }
         elseif ($password != $vpassword)
         {
+            Session::set('Error', 'The passwords you entered did not verify.');
             return false;
         }
         elseif (strlen($password) < 4)
         {
+            Session::set('Error', 'Your password may not be less than 4 characters.');
             return false;
         }
         elseif (!filter_var($email, FILTER_VALIDATE_EMAIL))
         {
+            Session::set('Error', 'The email address you entered is invalid.');
             return false;
         }
         elseif ($this->checkUsername($username) != false)
         {
+            Session::set('Error', 'The username you entered already exists.');
             return false;
         }
-        elseif ($this->ipConfig == true AND $_SERVER['REMOTE_ADDR'] != $ip)     
-        {                                   // the register page has a hidden field for IP.                                       // if it changes, false is returned.
-            return false;                   // for AOL users, this will be a problem.
-        }                                   // to avoid this, set $ipConfig to false.
+        elseif ($this->ipVerify == true AND $_SERVER['REMOTE_ADDR'] != $ip)     
+        {
+            Session::set('Error', 'Your IP-address has changed during the request.');
+            return false;
+        }
         elseif (isset($username) 
             AND isset($password) 
             AND isset($vpassword) 
@@ -121,16 +135,18 @@ class Users
             $query = $this->dbh->prepare('INSERT INTO `stats`
                     (`username`,`email`,`password`,`ip`,`sec_question`,`sec_answer`,`verified`,`activation_code`) 
                 VALUES 
-                    (?,?,?,?,?,?)');
+                    (?,?,?,?,?,?,?,?)');
             $query->execute(array(
                     $username, $email, $password, $ip, $sec_question, $sec_answer, $verified, $activation_code));
     
+            //Email activation set to true:
             if ($emailVerify == true)
             {
                 $userid = $this->dbh->lastInsertId();
-                if ($this->sendVerificationEmail($userid, $email, $activation_code))
+                if ($this->sendVerificationEmail($userid, $email, $activation_code)) //send the email.
                 {
                     Session::sunset('registerToken');
+                    Session::set('Message', 'You successfully created an account. Verify your email before logging in.');
                     return true;
                 }
                 else
@@ -140,18 +156,21 @@ class Users
                     $query = $this->dbh->prepare('DELETE FROM `stats`
                         WHERE `id` = ?');
                     $query->execute(array($userid));
+                    Session::set('Error', 'Activation email has failed. Please try signing up again.')
                     return false;
                 }
             }
             else
             {
-                //
+                //Email verification not required, unset the register token, and return true.
                 Session::sunset('registerToken');
+                Session::set('Message', 'You have successfully created an account. You may login now.');
                 return true;
             }
         }
         else
         {
+            Session::set('Error', 'An unknown error has occurred. Please try again.');
             return false;
         }
     }
@@ -179,22 +198,32 @@ class Users
         }
         elseif (!self::checkToken($form_token, $sess_token))
         {
+            Session::set('Error', 'The login token is invalid.');
             return false;
         }
-        elseif (!isset($username) OR !isset($password) OR !isset($ip))
+        elseif (!isset($username) OR !isset($password))
         {
+            Session::set('Error', 'You may not leave any fields blank.')
+            return false;
+        }
+        elseif ($ipVerify == true AND $ip != $_SERVER['REMOTE_ADDR'])
+        {
+            Session::set('Error', 'Your ip has ')
             return false;
         }
         elseif (!preg_match('/^[a-z\d]{2,64}$/i', $username))
         {
+            Session::set('Error', 'Username contains invalid characters. Form manipulation is frowned upon.');
             return false;
         }
         elseif ($this->checkUsername($username) == false)
         {
+            Session::set('Error', 'Username does not exist.');
             return false;
         }
         elseif ($this->ipConfig == true AND $ip != $_SERVER['REMOTE_ADDR'])
         {
+            Session::set('Error', 'Your IP-address has changed during the request.');
             return false; //again, if ipConfig == true, it will need to validate that ip's match.
         }
 
@@ -203,8 +232,14 @@ class Users
         $userid = $userData['id'];
         $user_pass = $userData['password'];
         $agent = $_SERVER['HTTP_USER_AGENT'];
+        $verified = $userData['verified'];
         if (self::checkPassword($user_pass, $password))
         {
+            if ($verified == 'false')
+            {
+                Session::set('Error', 'You must verify your email before logging in.');
+                return false;
+            }
             
             //update the users timestamp, well use it to generate an online status.
             $query = $this->dbh->prepare('UPDATE `stats` SET `login_timestamp` = ?
@@ -219,11 +254,12 @@ class Users
             Session::set('count', 5);
             Session::sunset('loginToken'); //unset (remove) the login token.
             
-            return true; //login successful, return true (bool) login successful.
+            return true; //login successful.
         }
         else
         {
-            return false; //hashed passwords did not match.
+            Session::get('Error', 'The password you entered was incorrect.');
+            return false;
         }
     }
     
@@ -272,7 +308,8 @@ class Users
      */
     public static function checkSessCount()
     {
-    	if (($_SESSION['count'] -= 1) == 0)
+    	$count = Session::get('count');
+    	if (($count -= 1) == 0)
     	{        
             Session::sunset('count'); //unset count.
             Session::set('count', 10); //reset count.
