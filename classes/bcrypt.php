@@ -93,5 +93,3 @@ class Bcrypt
         return $bytes;
     }
 }
-
-?>
