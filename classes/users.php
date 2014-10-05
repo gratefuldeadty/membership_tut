@@ -1,8 +1,7 @@
 <?php
 
 /**
-* Handles user stuff, ie: login, register, logout, islogged in, session starts, hashing algo, ect. 
-* @currently: everything is running properly.
+* Handles user stuff, ie: login, register, logout, islogged in, session starts
 */
 
 class Users
