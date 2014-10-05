@@ -8,8 +8,6 @@
 class Users
 {
     private $dbh;
-    private static $algo = '$2y';
-    private static $cost = '$10';
     private $ipVerify = false;
     private $emailVerify = false;
                         
@@ -19,9 +17,6 @@ class Users
     public function __construct($database)
     {
         $this->dbh = $database;
-        
-        //$2y$ is the updated algorithm string.
-        self::algo = (version_compare(PHP_VERSION, '5.3.7') >= 0) ? '$2y' : '$2x';
     }
     
     /**
@@ -341,48 +336,5 @@ class Users
     public static function logOut()
     {
         Session::destroy();
-    }
-
-    /**
-     * Create a random salt
-     * @returns mixed
-     */
-    public static function uniqueSalt()
-    {
-        return substr(sha1(mt_rand()),0,22);
-    }
-    
-    /**
-     * Hash the password
-     * @param string $password
-     * @return hashed password
-     */
-    public static function hashPassword($password)
-    {
-        return crypt($password, self::$algo . self::$cost . '$' . self::uniqueSalt());
-    }
-    
-    /**
-     * Verify password
-     * @param string $hash
-     * @param string $password
-     * @return bool
-     */
-    public static function checkPassword($hash, $password)
-    {
-        $salt = substr($hash, 0, 29);
-        $new_hash = crypt($password, $salt);
-        return ($hash == $new_hash);
-    }
-    
-    /**
-     * Verify form tokens match the session
-     * @param string $token
-     * @param string $session
-     * @return bool
-     */
-    public static function checkToken($token, $session)
-    {
-        return ($token == $session);
     }
 }
